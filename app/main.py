@@ -52,6 +52,7 @@ app.add_middleware(
 app.include_router(practice.router)
 app.include_router(websocket.router)
 app.include_router(agent_routes.router)
+app.include_router(agent_routes.chat_router)
 
 # Экспорт метрик для Prometheus.
 app.mount("/metrics", make_asgi_app())

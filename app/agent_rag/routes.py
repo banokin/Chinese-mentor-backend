@@ -24,10 +24,10 @@ class AgentResponse(BaseModel):
 
 
 router = APIRouter(prefix="/api/agent", tags=["agent"])
+chat_router = APIRouter(prefix="/api/chat", tags=["chat"])
 
 
-@router.post("/", response_model=AgentResponse)
-async def agent_chat(payload: AgentRequest) -> AgentResponse:
+async def _handle_agent_chat(payload: AgentRequest) -> AgentResponse:
     messages = payload.messages
     last_user_idx = next((i for i in range(len(messages) - 1, -1, -1) if messages[i].role == "user"), -1)
     if last_user_idx < 0:
@@ -42,3 +42,13 @@ async def agent_chat(payload: AgentRequest) -> AgentResponse:
     if not answer:
         raise HTTPException(status_code=502, detail={"message": "Агент вернул пустой ответ"})
     return AgentResponse(message=answer)
+
+
+@router.post("/", response_model=AgentResponse)
+async def agent_chat(payload: AgentRequest) -> AgentResponse:
+    return await _handle_agent_chat(payload)
+
+
+@chat_router.post("/", response_model=AgentResponse)
+async def chat(payload: AgentRequest) -> AgentResponse:
+    return await _handle_agent_chat(payload)
