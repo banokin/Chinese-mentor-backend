@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
 from langchain_openai import OpenAIEmbeddings
 from langchain_qdrant import QdrantVectorStore
 from qdrant_client import QdrantClient
@@ -11,7 +12,7 @@ from loader_and_splitter import load_pdf, split_documents
 
 def ingest_pdf_to_qdrant(
     pdf_path: str,
-    collection_name: str = "phrasebook_chunks",
+    collection_name: str = "chinese_lexicon",
     qdrant_url: str = "http://localhost:6333",
     embedding_model: str = "text-embedding-3-small",
 ) -> None:
@@ -63,6 +64,12 @@ def ingest_pdf_to_qdrant(
 
 
 if __name__ == "__main__":
+    backend_root = Path(__file__).resolve().parents[2]
+    load_dotenv(backend_root / ".env")
     project_root = Path(__file__).resolve().parents[3]
     pdf_file = project_root / "russko-kitajskij_razgovornik.pdf"
-    ingest_pdf_to_qdrant(str(pdf_file))
+    ingest_pdf_to_qdrant(
+        str(pdf_file),
+        collection_name=(os.getenv("QDRANT_COLLECTION") or "chinese_lexicon").strip(),
+        qdrant_url=(os.getenv("QDRANT_URL") or "http://localhost:6333").strip(),
+    )

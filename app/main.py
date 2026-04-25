@@ -7,10 +7,14 @@ from __future__ import annotations
 import logging
 import os
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
 from prometheus_client import make_asgi_app
+
+load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
 from app.agent_rag import routes as agent_routes
 from app.pronunciation.routes import practice, websocket

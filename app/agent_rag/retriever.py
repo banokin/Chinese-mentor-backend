@@ -8,7 +8,7 @@ from qdrant_client import QdrantClient
 
 
 def build_retriever(
-    collection_name: str = "eval_phrasebook_openai",
+    collection_name: str = "chinese_lexicon",
     qdrant_url: str = "http://localhost:6333",
     top_k: int = 3,
 ):
@@ -20,8 +20,7 @@ def build_retriever(
         raise EnvironmentError("OPENAI_API_KEY is not set")
 
     embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
-    qdrant_api_key = (os.getenv("QDRANT_API_KEY") or "").strip() or None
-    client = QdrantClient(url=qdrant_url, api_key=qdrant_api_key)
+    client = QdrantClient(url=qdrant_url)
     vectorstore = QdrantVectorStore(
         client=client,
         collection_name=collection_name,
