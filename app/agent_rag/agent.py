@@ -30,7 +30,9 @@ def get_retriever():
     """
     k = max(1, int(os.getenv("RAG_TOP_K") or "4"))
     collection = (os.getenv("QDRANT_COLLECTION") or "chinese_lexicon").strip()
-    qdrant_url = (os.getenv("QDRANT_URL") or "http://127.0.0.1:6333").strip()
+    qdrant_url = (os.getenv("QDRANT_URL") or "").strip()
+    if not qdrant_url:
+        raise ValueError("Задайте QDRANT_URL в окружении")
     return build_retriever(collection_name=collection, qdrant_url=qdrant_url, top_k=k)
 
 

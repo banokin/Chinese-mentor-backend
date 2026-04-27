@@ -123,8 +123,10 @@ def main() -> None:
     project_root = Path(__file__).resolve().parents[3]
     pdf_file = project_root / "russko-kitajskij_razgovornik.pdf"
 
-    qdrant_url = os.getenv("QDRANT_URL", "http://localhost:6333")
-    client = QdrantClient(url=qdrant_url)
+    qdrant_url = (os.getenv("QDRANT_URL") or "").strip()
+    if not qdrant_url:
+        raise EnvironmentError("QDRANT_URL is not set")
+    client = QdrantClient(url=qdrant_url, prefer_grpc=False, check_compatibility=False)
 
     docs = load_pdf(str(pdf_file))
     chunks = split_documents(docs, chunk_size=1000, chunk_overlap=200)

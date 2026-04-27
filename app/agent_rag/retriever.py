@@ -9,7 +9,7 @@ from qdrant_client import QdrantClient
 
 def build_retriever(
     collection_name: str = "chinese_lexicon",
-    qdrant_url: str = "http://localhost:6333",
+    qdrant_url: str | None = None,
     top_k: int = 3,
 ):
     """Create retriever over Qdrant collection with OpenAI embeddings."""
@@ -18,9 +18,12 @@ def build_retriever(
 
     if not os.getenv("OPENAI_API_KEY"):
         raise EnvironmentError("OPENAI_API_KEY is not set")
+    qdrant_url = (qdrant_url or os.getenv("QDRANT_URL") or "").strip()
+    if not qdrant_url:
+        raise EnvironmentError("QDRANT_URL is not set")
 
     embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
-    client = QdrantClient(url=qdrant_url)
+    client = QdrantClient(url=qdrant_url, prefer_grpc=False, check_compatibility=False)
     vectorstore = QdrantVectorStore(
         client=client,
         collection_name=collection_name,

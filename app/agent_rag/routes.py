@@ -129,7 +129,9 @@ async def upload_rag_file(file: UploadFile = File(...)) -> RagUploadResponse:
         raise HTTPException(status_code=413, detail={"message": "Файл больше 15 MB"})
 
     collection = (os.getenv("QDRANT_COLLECTION") or "chinese_lexicon").strip()
-    qdrant_url = (os.getenv("QDRANT_URL") or "http://localhost:6333").strip()
+    qdrant_url = (os.getenv("QDRANT_URL") or "").strip()
+    if not qdrant_url:
+        raise HTTPException(status_code=503, detail={"message": "QDRANT_URL не задан"})
     embedding_model = (os.getenv("OPENAI_EMBEDDING_MODEL") or "text-embedding-3-small").strip()
 
     try:
