@@ -5,214 +5,191 @@ from typing import TypedDict
 
 class TestQuestion(TypedDict):
     question: str
-    ground_truth: str
+    expected_answer: str
+    expected_keywords: list[str]
+    expected_page: int | None
+    negative_question: bool
 
 
 SOURCE_FILE = "деловой китайский язык.pdf"
 
-TEST_QUESTIONS: list[TestQuestion] = [
+EVAL_DATASET: list[TestQuestion] = [
     {
         "question": "Как по-китайски визитная карточка?",
-        "ground_truth": "Визитная карточка по-китайски — 名片, pinyin: míngpiàn.",
-    },
-    {
-        "question": "Как по-китайски директор?",
-        "ground_truth": "Директор по-китайски — 经理, pinyin: jīnglǐ.",
-    },
-    {
-        "question": "Как по-китайски компания?",
-        "ground_truth": "Компания по-китайски — 公司, pinyin: gōngsī.",
-    },
-    {
-        "question": "Как по-китайски отдел кадров или трудовые ресурсы?",
-        "ground_truth": "Трудовые ресурсы по-китайски — 人力资源, pinyin: rénlì zīyuán.",
-    },
-    {
-        "question": "Как по-китайски финансовый отдел?",
-        "ground_truth": "Финансы — 财务, pinyin: cáiwù; отдел — 部, pinyin: bù.",
-    },
-    {
-        "question": "Как по-китайски резюме?",
-        "ground_truth": "Резюме по-китайски — 简历, pinyin: jiǎnlì.",
-    },
-    {
-        "question": "Как по-китайски опыт?",
-        "ground_truth": "Опыт по-китайски — 经验, pinyin: jīngyàn.",
-    },
-    {
-        "question": "Как по-китайски должность?",
-        "ground_truth": "Должность по-китайски — 职位, pinyin: zhíwèi.",
-    },
-    {
-        "question": "Как по-китайски принимать на работу?",
-        "ground_truth": "Принимать на работу по-китайски — 录用, pinyin: lùyòng.",
-    },
-    {
-        "question": "Как по-китайски заявление или подавать заявление?",
-        "ground_truth": "Подавать заявление по-китайски — 申请, pinyin: shēnqǐng.",
+        "expected_answer": "Визитная карточка по-китайски — 名片, pinyin: míngpiàn.",
+        "expected_keywords": ["名片", "míngpiàn", "визитная карточка"],
+        "expected_page": 6,
+        "negative_question": False,
     },
     {
         "question": "Как по-китайски электронная почта?",
-        "ground_truth": "Электронная почта по-китайски — 电子邮件, pinyin: diànzǐ yóujiàn.",
-    },
-    {
-        "question": "Как по-китайски расписание?",
-        "ground_truth": "Расписание по-китайски — 日程, pinyin: rìchéng.",
+        "expected_answer": "Электронная почта по-китайски — 电子邮件, pinyin: diànzǐ yóujiàn.",
+        "expected_keywords": ["电子邮件", "diànzǐ yóujiàn", "электронная почта"],
+        "expected_page": 12,
+        "negative_question": False,
     },
     {
         "question": "Как по-китайски офис?",
-        "ground_truth": "Офис по-китайски — 办公室, pinyin: bàngōngshì.",
-    },
-    {
-        "question": "Как по-китайски бронировать?",
-        "ground_truth": "Бронировать по-китайски — 预定, pinyin: yùdìng.",
+        "expected_answer": "Офис по-китайски — 办公室, pinyin: bàngōngshì.",
+        "expected_keywords": ["办公室", "bàngōngshì", "офис"],
+        "expected_page": 12,
+        "negative_question": False,
     },
     {
         "question": "Как по-китайски авиабилет?",
-        "ground_truth": "Авиабилет по-китайски — 机票, pinyin: jīpiào.",
+        "expected_answer": "Авиабилет по-китайски — 机票, pinyin: jīpiào.",
+        "expected_keywords": ["机票", "jīpiào", "авиабилет"],
+        "expected_page": 12,
+        "negative_question": False,
     },
     {
         "question": "Как по-китайски доставка товара?",
-        "ground_truth": "Доставка товара по-китайски — 送货, pinyin: sònghuò.",
+        "expected_answer": "Доставка товара по-китайски — 送货, pinyin: sònghuò.",
+        "expected_keywords": ["送货", "sònghuò", "доставка"],
+        "expected_page": 16,
+        "negative_question": False,
     },
     {
         "question": "Как по-китайски мебель?",
-        "ground_truth": "Мебель по-китайски — 家具, pinyin: jiājù.",
+        "expected_answer": "Мебель по-китайски — 家具, pinyin: jiājù.",
+        "expected_keywords": ["家具", "jiājù", "мебель"],
+        "expected_page": 16,
+        "negative_question": False,
     },
     {
         "question": "Как по-китайски лифт?",
-        "ground_truth": "Лифт по-китайски — 电梯, pinyin: diàntī.",
-    },
-    {
-        "question": "Как по-китайски этаж?",
-        "ground_truth": "Этаж по-китайски — 层, pinyin: céng.",
-    },
-    {
-        "question": "Как по-китайски принтер?",
-        "ground_truth": "Принтер по-китайски — 打印机, pinyin: dǎyìnjī.",
-    },
-    {
-        "question": "Как по-китайски ноутбук?",
-        "ground_truth": "Ноутбук по-китайски — 笔记本电脑, pinyin: bǐjìběn diànnǎo.",
+        "expected_answer": "Лифт по-китайски — 电梯, pinyin: diàntī.",
+        "expected_keywords": ["电梯", "diàntī", "лифт"],
+        "expected_page": 16,
+        "negative_question": False,
     },
     {
         "question": "Как по-китайски бизнес-банкет?",
-        "ground_truth": "Бизнес-банкет по-китайски — 商务宴会, pinyin: shāngwù yànhuì.",
+        "expected_answer": "Бизнес-банкет по-китайски — 商务宴会, pinyin: shāngwù yànhuì.",
+        "expected_keywords": ["商务宴会", "shāngwù yànhuì", "банкет"],
+        "expected_page": 20,
+        "negative_question": False,
+    },
+    {
+        "question": "Как по-китайски принимать на работу?",
+        "expected_answer": "Принимать на работу по-китайски — 录用, pinyin: lùyòng.",
+        "expected_keywords": ["录用", "lùyòng", "принимать на работу"],
+        "expected_page": 9,
+        "negative_question": False,
+    },
+    {
+        "question": "Как по-китайски опыт?",
+        "expected_answer": "Опыт по-китайски — 经验, pinyin: jīngyàn.",
+        "expected_keywords": ["经验", "jīngyàn", "опыт"],
+        "expected_page": 9,
+        "negative_question": False,
     },
     {
         "question": "Как по-китайски сотрудничать?",
-        "ground_truth": "Сотрудничать по-китайски — 合作, pinyin: hézuò.",
+        "expected_answer": "Сотрудничать по-китайски — 合作, pinyin: hézuò.",
+        "expected_keywords": ["合作", "hézuò", "сотрудничать"],
+        "expected_page": 20,
+        "negative_question": False,
     },
     {
         "question": "Как по-китайски качество?",
-        "ground_truth": "Качество по-китайски — 质量, pinyin: zhìliàng.",
+        "expected_answer": "Качество по-китайски — 质量, pinyin: zhìliàng.",
+        "expected_keywords": ["质量", "zhìliàng", "качество"],
+        "expected_page": 20,
+        "negative_question": False,
     },
     {
         "question": "Как по-китайски цена?",
-        "ground_truth": "Цена по-китайски — 价格, pinyin: jiàgé.",
-    },
-    {
-        "question": "Как по-китайски импорт?",
-        "ground_truth": "Импорт по-китайски — 进口, pinyin: jìnkǒu.",
-    },
-    {
-        "question": "Как по-китайски экспорт?",
-        "ground_truth": "Экспорт по-китайски — 出口, pinyin: chūkǒu.",
+        "expected_answer": "Цена по-китайски — 价格, pinyin: jiàgé.",
+        "expected_keywords": ["价格", "jiàgé", "цена"],
+        "expected_page": 20,
+        "negative_question": False,
     },
     {
         "question": "Как по-китайски интернет?",
-        "ground_truth": "Интернет по-китайски — 网络, pinyin: wǎngluò.",
-    },
-    {
-        "question": "Как по-китайски совещание?",
-        "ground_truth": "Совещание по-китайски — 会议, pinyin: huìyì.",
-    },
-    {
-        "question": "Как по-китайски гарантия или гарантировать?",
-        "ground_truth": "Гарантировать по-китайски — 保证, pinyin: bǎozhèng.",
-    },
-    {
-        "question": "Как по-китайски информация?",
-        "ground_truth": "Информация по-китайски — 信息, pinyin: xìnxī.",
-    },
-    {
-        "question": "Как по-китайски загружать файл?",
-        "ground_truth": "Загружать по-китайски — 上传, pinyin: shàngchuán.",
+        "expected_answer": "Интернет по-китайски — 网络, pinyin: wǎngluò.",
+        "expected_keywords": ["网络", "wǎngluò", "интернет"],
+        "expected_page": 23,
+        "negative_question": False,
     },
     {
         "question": "Как по-китайски скачивать?",
-        "ground_truth": "Скачивать по-китайски — 下载, pinyin: xiàzǎi.",
-    },
-    {
-        "question": "Как по-китайски поисковая система?",
-        "ground_truth": "Поисковая система по-китайски — 搜索引擎, pinyin: sōusuǒ yǐnqíng.",
-    },
-    {
-        "question": "Как по-китайски бизнес-консультация?",
-        "ground_truth": "Бизнес-консультация по-китайски — 商业咨询, pinyin: shāngyè zīxún.",
+        "expected_answer": "Скачивать по-китайски — 下载, pinyin: xiàzǎi.",
+        "expected_keywords": ["下载", "xiàzǎi", "скачивать"],
+        "expected_page": 26,
+        "negative_question": False,
     },
     {
         "question": "Как по-китайски предприниматель?",
-        "ground_truth": "Предприниматель по-китайски — 企业家, pinyin: qǐyèjiā.",
+        "expected_answer": "Предприниматель по-китайски — 企业家, pinyin: qǐyèjiā.",
+        "expected_keywords": ["企业家", "qǐyèjiā", "предприниматель"],
+        "expected_page": 27,
+        "negative_question": False,
     },
     {
         "question": "Как по-китайски консультант?",
-        "ground_truth": "Консультант по-китайски — 顾问, pinyin: gùwèn.",
+        "expected_answer": "Консультант по-китайски — 顾问, pinyin: gùwèn.",
+        "expected_keywords": ["顾问", "gùwèn", "консультант"],
+        "expected_page": 27,
+        "negative_question": False,
     },
     {
         "question": "Как по-китайски преимущество?",
-        "ground_truth": "Преимущество по-китайски — 优势, pinyin: yōushì.",
-    },
-    {
-        "question": "Как по-китайски прибыль?",
-        "ground_truth": "Прибыль по-китайски — 利润, pinyin: lìrùn.",
-    },
-    {
-        "question": "Как по-китайски бренд или марка?",
-        "ground_truth": "Бренд или марка по-китайски — 品牌, pinyin: pǐnpái.",
+        "expected_answer": "Преимущество по-китайски — 优势, pinyin: yōushì.",
+        "expected_keywords": ["优势", "yōushì", "преимущество"],
+        "expected_page": 27,
+        "negative_question": False,
     },
     {
         "question": "Как по-китайски культура предприятия?",
-        "ground_truth": "Культура предприятия по-китайски — 企业文化, pinyin: qǐyè wénhuà.",
-    },
-    {
-        "question": "Как по-китайски доход?",
-        "ground_truth": "Доход по-китайски — 收入, pinyin: shōurù.",
-    },
-    {
-        "question": "Как по-китайски социальное обеспечение или福利?",
-        "ground_truth": "Социальное обеспечение по-китайски — 福利, pinyin: fúlì.",
-    },
-    {
-        "question": "Как по-китайски возможность?",
-        "ground_truth": "Возможность по-китайски — 机会, pinyin: jīhuì.",
-    },
-    {
-        "question": "Как по-китайски атмосфера?",
-        "ground_truth": "Атмосфера по-китайски — 气氛, pinyin: qìfēn.",
-    },
-    {
-        "question": "Как по-китайски кадровое агентство?",
-        "ground_truth": "Кадровое агентство по-китайски — 猎头公司, pinyin: liètóu gōngsī.",
+        "expected_answer": "Культура предприятия по-китайски — 企业文化, pinyin: qǐyè wénhuà.",
+        "expected_keywords": ["企业文化", "qǐyè wénhuà", "культура предприятия"],
+        "expected_page": 30,
+        "negative_question": False,
     },
     {
         "question": "Как по-китайски деловая переписка?",
-        "ground_truth": "Деловая переписка по-китайски — 商务信函, pinyin: shāngwù xìnhán.",
+        "expected_answer": "Деловая переписка по-китайски — 商务信函, pinyin: shāngwù xìnhán.",
+        "expected_keywords": ["商务信函", "shāngwù xìnhán", "деловая переписка"],
+        "expected_page": 34,
+        "negative_question": False,
     },
     {
         "question": "Как по-китайски письмо-запрос?",
-        "ground_truth": "Письмо-запрос по-китайски — 询价, pinyin: xúnjià.",
-    },
-    {
-        "question": "Как по-китайски предложение или оферта?",
-        "ground_truth": "Предложение или оферта по-китайски — 发价, pinyin: fājià.",
+        "expected_answer": "Письмо-запрос по-китайски — 询价, pinyin: xúnjià.",
+        "expected_keywords": ["询价", "xúnjià", "письмо-запрос"],
+        "expected_page": 34,
+        "negative_question": False,
     },
     {
         "question": "Как по-китайски письмо-благодарность?",
-        "ground_truth": "Письмо-благодарность по-китайски — 感谢信, pinyin: gǎnxièxìn.",
+        "expected_answer": "Письмо-благодарность по-китайски — 感谢信, pinyin: gǎnxièxìn.",
+        "expected_keywords": ["感谢信", "gǎnxièxìn", "письмо-благодарность"],
+        "expected_page": 41,
+        "negative_question": False,
     },
     {
-        "question": "Как по-китайски приглашение?",
-        "ground_truth": "Приглашение по-китайски — 邀请信, pinyin: yāoqǐngxìn.",
+        "question": "Как настроить Docker для FastAPI?",
+        "expected_answer": "В документе нет информации для ответа на этот вопрос.",
+        "expected_keywords": [],
+        "expected_page": None,
+        "negative_question": True,
+    },
+    {
+        "question": "Как обучить нейросеть на PyTorch?",
+        "expected_answer": "В документе нет информации для ответа на этот вопрос.",
+        "expected_keywords": [],
+        "expected_page": None,
+        "negative_question": True,
+    },
+    {
+        "question": "Как подключить Qdrant Cloud?",
+        "expected_answer": "В документе нет информации для ответа на этот вопрос.",
+        "expected_keywords": [],
+        "expected_page": None,
+        "negative_question": True,
     },
 ]
+
+# Backward-compatible alias for older eval runner imports.
+TEST_QUESTIONS = EVAL_DATASET
