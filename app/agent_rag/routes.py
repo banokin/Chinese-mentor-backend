@@ -7,10 +7,11 @@ from typing import Literal
 
 from openai import AsyncOpenAI
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, File, HTTPException, UploadFile
 from pydantic import BaseModel, Field
 
 from app.agent_rag.agent import run_agent_query
+from app.agent_rag.ingest import ingest_documents_to_qdrant, load_uploaded_documents
 
 
 class AgentMessage(BaseModel):
@@ -32,6 +33,15 @@ class TranslateRequest(BaseModel):
 
 class TranslateResponse(BaseModel):
     translation: str
+
+
+class RagUploadResponse(BaseModel):
+    filename: str
+    collection: str
+    documents: int
+    chunks: int
+    vector_size: int
+    points_count: int
 
 
 router = APIRouter(prefix="/api/agent", tags=["agent"])
@@ -107,3 +117,34 @@ async def translate_to_russian(payload: TranslateRequest) -> TranslateResponse:
     if not translation:
         raise HTTPException(status_code=502, detail={"message": "Пустой ответ перевода"})
     return TranslateResponse(translation=translation)
+
+
+@router.post("/rag/upload", response_model=RagUploadResponse)
+async def upload_rag_file(file: UploadFile = File(...)) -> RagUploadResponse:
+    filename = file.filename or "document"
+    content = await file.read()
+    if not content:
+        raise HTTPException(status_code=400, detail={"message": "Файл пустой"})
+    if len(content) > 15 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail={"message": "Файл больше 15 MB"})
+
+    collection = (os.getenv("QDRANT_COLLECTION") or "chinese_lexicon").strip()
+    qdrant_url = (os.getenv("QDRANT_URL") or "http://localhost:6333").strip()
+    embedding_model = (os.getenv("OPENAI_EMBEDDING_MODEL") or "text-embedding-3-small").strip()
+
+    try:
+        documents = load_uploaded_documents(filename, content)
+        result = ingest_documents_to_qdrant(
+            documents,
+            collection_name=collection,
+            qdrant_url=qdrant_url,
+            embedding_model=embedding_model,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail={"message": str(e)}) from e
+    except EnvironmentError as e:
+        raise HTTPException(status_code=503, detail={"message": str(e)}) from e
+    except Exception as e:
+        raise HTTPException(status_code=502, detail={"message": f"Ошибка загрузки в RAG: {e}"}) from e
+
+    return RagUploadResponse(filename=filename, **result)
