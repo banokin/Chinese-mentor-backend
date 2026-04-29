@@ -11,6 +11,7 @@ from langchain.agents import create_agent
 from langchain_core.messages import AIMessage
 from langchain_core.tools import tool
 
+from app.agent_rag.observability import get_agent_run_config
 from app.agent_rag.retriever import build_retriever
 
 logger = logging.getLogger(__name__)
@@ -77,7 +78,7 @@ async def run_agent_query(
     executor = create_rag_agent_executor(verbose=verbose)
     history = chat_history or []
     input_messages = [*history, {"role": "user", "content": question.strip()}]
-    out = await executor.ainvoke({"messages": input_messages})
+    out = await executor.ainvoke({"messages": input_messages}, config=get_agent_run_config())
 
     messages = out.get("messages") if isinstance(out, dict) else None
     if messages:

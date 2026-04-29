@@ -16,6 +16,7 @@ from prometheus_client import make_asgi_app
 
 load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
+from app.agent_rag.observability import log_observability_status
 from app.agent_rag import routes as agent_routes
 from app.pronunciation.routes import practice, websocket
 
@@ -28,6 +29,7 @@ async def lifespan(app: FastAPI):
     token = (os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACE_HUB_TOKEN") or "").strip()
     if token and not os.environ.get("HUGGINGFACE_HUB_TOKEN"):
         os.environ["HUGGINGFACE_HUB_TOKEN"] = token
+    log_observability_status()
     yield
 
 
