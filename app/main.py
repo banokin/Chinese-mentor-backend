@@ -6,15 +6,48 @@ from __future__ import annotations
 
 import logging
 import os
+import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+_BACKEND_DIR = Path(__file__).resolve().parents[1]
+
+
+def _exit_if_project_venv_ignored() -> None:
+    """
+    При локальном backend/venv (или .venv) процесс должен идти из него.
+    Иначе «uvicorn» из Conda тянет старый LangChain и падает на create_agent.
+    """
+    for name in ("venv", ".venv"):
+        venv_dir = (_BACKEND_DIR / name).resolve()
+        if not (venv_dir / "pyvenv.cfg").is_file():
+            continue
+        if os.path.normpath(sys.prefix) == os.path.normpath(str(venv_dir)):
+            return
+        if sys.platform == "win32":
+            py = venv_dir / "Scripts" / "python.exe"
+            cmd = f'"{py}" -m uvicorn app.main:app --reload'
+        else:
+            py = venv_dir / "bin" / "python"
+            cmd = f"{py} -m uvicorn app.main:app --reload"
+        print(
+            "Найден каталог зависимостей "
+            f"{name!r}, но интерпретатор другой (sys.prefix={sys.prefix!r}).\n"
+            "Не вызывайте «голый» uvicorn из Conda. Из каталога backend выполните:\n"
+            f"  {cmd}\n",
+            file=sys.stderr,
+        )
+        raise SystemExit(2)
+
+
+_exit_if_project_venv_ignored()
+
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from dotenv import load_dotenv
 from prometheus_client import make_asgi_app
 
-load_dotenv(Path(__file__).resolve().parents[1] / ".env")
+load_dotenv(_BACKEND_DIR / ".env")
 
 from app.agent_rag.observability import log_observability_status
 from app.agent_rag import routes as agent_routes
