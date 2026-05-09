@@ -32,3 +32,6 @@ htmlcov/
 
 # Logs
 *.log
+
+# Eval runs (локальные отчёты)
+eval_outputs/

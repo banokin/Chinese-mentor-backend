@@ -2,33 +2,35 @@ import os
 from pathlib import Path
 
 from dotenv import load_dotenv
-from langchain_openai import OpenAIEmbeddings
 from langchain_qdrant import QdrantVectorStore
-from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams
 
-from loader_and_splitter import load_pdf, split_documents
+from app.agent_rag.loader_and_splitter import load_pdf, split_documents
+from app.agent_rag.qdrant_factory import (
+    default_embedding_model,
+    make_openai_embeddings,
+    make_qdrant_client,
+    require_openai_key,
+    resolve_qdrant_url,
+)
 
 
 def ingest_pdf_to_qdrant(
     pdf_path: str,
     collection_name: str = "chinese_lexicon",
     qdrant_url: str | None = None,
-    embedding_model: str = "text-embedding-3-small",
+    embedding_model: str | None = None,
 ) -> None:
     """Load PDF, split into chunks, embed and store in configured Qdrant."""
-    if not os.getenv("OPENAI_API_KEY"):
-        raise EnvironmentError("OPENAI_API_KEY is not set")
-    qdrant_url = (qdrant_url or os.getenv("QDRANT_URL") or "").strip()
-    if not qdrant_url:
-        raise EnvironmentError("QDRANT_URL is not set")
+    require_openai_key()
+    qdrant_url = resolve_qdrant_url(qdrant_url)
 
     documents = load_pdf(pdf_path)
     chunks = split_documents(documents, chunk_size=1000, chunk_overlap=200)
-    embeddings = OpenAIEmbeddings(model=embedding_model)
+    embeddings = make_openai_embeddings(embedding_model)
     vector_size = len(embeddings.embed_query("проверка эмбеддинга"))
 
-    client = QdrantClient(url=qdrant_url, prefer_grpc=False, check_compatibility=False)
+    client = make_qdrant_client(qdrant_url=qdrant_url)
 
     if client.collection_exists(collection_name):
         collection_info = client.get_collection(collection_name=collection_name)
@@ -61,7 +63,7 @@ def ingest_pdf_to_qdrant(
     points_count = client.count(collection_name=collection_name).count
     print(f"Loaded pages: {len(documents)}")
     print(f"Split chunks: {len(chunks)}")
-    print(f"Embedding model: {embedding_model}")
+    print(f"Embedding model: {default_embedding_model(embedding_model)}")
     print(f"Vector size: {vector_size}")
     print(f"Indexed vectors in '{collection_name}': {points_count}")
 

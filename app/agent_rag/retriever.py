@@ -1,10 +1,8 @@
-import os
-from pathlib import Path
-
-from dotenv import load_dotenv
-from langchain_openai import OpenAIEmbeddings
-from langchain_qdrant import QdrantVectorStore
-from qdrant_client import QdrantClient
+from app.agent_rag.qdrant_factory import (
+    load_agent_rag_env,
+    make_vector_store,
+    require_openai_key,
+)
 
 
 def build_retriever(
@@ -13,26 +11,17 @@ def build_retriever(
     top_k: int = 3,
 ):
     """Create retriever over Qdrant collection with OpenAI embeddings."""
-    backend_root = Path(__file__).resolve().parents[2]
-    load_dotenv(backend_root / ".env")
-
-    if not os.getenv("OPENAI_API_KEY"):
-        raise EnvironmentError("OPENAI_API_KEY is not set")
-    qdrant_url = (qdrant_url or os.getenv("QDRANT_URL") or "").strip()
-    if not qdrant_url:
-        raise EnvironmentError("QDRANT_URL is not set")
-
-    embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
-    client = QdrantClient(url=qdrant_url, prefer_grpc=False, check_compatibility=False)
-    vectorstore = QdrantVectorStore(
-        client=client,
-        collection_name=collection_name,
-        embedding=embeddings,
+    load_agent_rag_env()
+    require_openai_key()
+    vectorstore = make_vector_store(
+        collection_name,
+        qdrant_url=qdrant_url,
     )
     return vectorstore.as_retriever(search_kwargs={"k": max(1, int(top_k))})
 
 
 if __name__ == "__main__":
+    load_agent_rag_env()
     retriever = build_retriever()
     query = "Как по-китайски сказать спасибо?"
     docs = retriever.invoke(query)

@@ -6,12 +6,12 @@ from pathlib import Path
 from typing import Sequence
 
 from langchain_core.documents import Document
-from langchain_openai import OpenAIEmbeddings
 from langchain_qdrant import QdrantVectorStore
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams
 
 from app.agent_rag.loader_and_splitter import load_pdf, split_documents
+from app.agent_rag.qdrant_factory import make_openai_embeddings, make_qdrant_client
 
 
 SUPPORTED_TEXT_EXTENSIONS = {".txt", ".md"}
@@ -84,9 +84,9 @@ def ingest_documents_to_qdrant(
     if not chunks:
         raise ValueError("Не удалось получить текстовые чанки из файла")
 
-    embeddings = OpenAIEmbeddings(model=embedding_model)
+    embeddings = make_openai_embeddings(embedding_model)
     vector_size = len(embeddings.embed_query("проверка эмбеддинга"))
-    client = QdrantClient(url=qdrant_url, prefer_grpc=False, check_compatibility=False)
+    client = make_qdrant_client(qdrant_url=qdrant_url)
     _ensure_collection(client, collection_name, vector_size)
 
     vector_store = QdrantVectorStore(

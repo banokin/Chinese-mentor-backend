@@ -88,6 +88,8 @@ app.include_router(practice.router)
 app.include_router(websocket.router)
 app.include_router(agent_routes.router)
 app.include_router(agent_routes.chat_router)
+app.include_router(agent_routes.tutor_router)
+app.include_router(agent_routes.languages_router)
 
 # Экспорт метрик для Prometheus.
 app.mount("/metrics", make_asgi_app())
