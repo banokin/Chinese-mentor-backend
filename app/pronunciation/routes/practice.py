@@ -9,14 +9,16 @@ from typing import Annotated
 from fastapi import APIRouter, File, Form, HTTPException, Response, UploadFile
 
 from app.pronunciation.schemas import ErrorDetail, PracticeEvaluateResponse, TranscriptionResponse
-from app.services.asr_service import ASRError, transcribe_bytes
 from app.pronunciation.services.scoring_service import evaluate_expected_vs_recognized
 from app.pronunciation.services.transcription_match_service import evaluate_text_match
+from app.services.asr_service import ASRError, transcribe_bytes
 from app.services.tts_service import TTSError, synthesize_speech_mp3
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/practice", tags=["practice"])
+
+_ASR_CHAT_LANGS = frozenset({"zh", "fr", "es", "en"})
 
 
 def _as_http(exc: ASRError) -> HTTPException:
@@ -26,14 +28,34 @@ def _as_http(exc: ASRError) -> HTTPException:
     )
 
 
+def _normalize_transcribe_language(form_value: str | None) -> str:
+    """ISO 639-1 для Whisper/HF: язык ожидаемой речи (zh, fr, es, en)."""
+    code = (form_value or "zh").strip().lower()
+    if code not in _ASR_CHAT_LANGS:
+        raise HTTPException(
+            status_code=400,
+            detail=ErrorDetail(
+                code="invalid_asr_language",
+                message="Допустимые языки распознавания: zh, fr, es, en",
+                details={"received": form_value},
+            ).model_dump(),
+        )
+    return code
+
+
 @router.post("/transcribe", response_model=TranscriptionResponse)
 async def transcribe_only(
     audio: Annotated[UploadFile, File(description="Recorded audio")],
+    language: Annotated[
+        str | None,
+        Form(description="ISO 639-1: язык речи в аудио (zh, fr, es, en); по умолчанию zh"),
+    ] = None,
 ) -> TranscriptionResponse:
-    """ASR only — returns recognized_text + meta (OpenAI)."""
+    """ASR only — returns recognized_text + meta (OpenAI / HF по ASR_BACKEND)."""
     data = await audio.read()
+    lang = _normalize_transcribe_language(language)
     try:
-        text, meta = await transcribe_bytes(data, filename=audio.filename or "audio.webm")
+        text, meta = await transcribe_bytes(data, filename=audio.filename or "audio.webm", language=lang)
     except ASRError as e:
         raise _as_http(e) from e
     return TranscriptionResponse(recognized_text=text, meta=meta)
